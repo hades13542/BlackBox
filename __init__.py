@@ -1,48 +1,135 @@
-#tu jest moj main
-from tkinter import *
-from Samolot import *
-def addPlane():
-    # print(nazwaSamolotu.get())
-    # print(odleglosc.get())
-    # print(paliwo.get())
-    # print(predkosc.get())
-    plane = Samolot(nazwaSamolotu.get(), odleglosc.get(), paliwo.get(), predkosc.get())
-    plane.poprawnosc()
-    plane.print()
-    plane.run()
+# tu jest moj main
+import matplotlib
+from Decoder import Decoder
+matplotlib.use("Tkagg")
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
 
-def makeWindow():
-    global nazwaSamolotu, odleglosc, paliwo, predkosc
-    window = Tk()
-    frame1 = Frame(window)
-    frame1.pack()
+import tkinter as tk
+from tkinter import ttk
 
-    Label(frame1, text="Nazwa samolotu").grid(row=0, column=0, sticky=W)
-    nazwaSamolotu = StringVar()
-    name = Entry(frame1, textvariable=nazwaSamolotu)
-    name.grid(row=0, column=1, sticky=W)
+LARGE_FONT = ("Verdana", 12)
 
-    Label(frame1, text="Odległość do przebycia [km]").grid(row=1, column=0, sticky=W)
-    odleglosc = DoubleVar()
-    name = Entry(frame1, textvariable=odleglosc)
-    name.grid(row=1, column=1, sticky=W)
+data = Decoder()
+allData = data.getData()
 
-    Label(frame1, text="Ilosc paliwa [l] ").grid(row=2, column=0, sticky=W)
-    paliwo = DoubleVar()
-    name = Entry(frame1, textvariable=paliwo)
-    name.grid(row=2, column=1, sticky=W)
+class SeaofBTCapp(tk.Tk):
+    def __init__(self, *args, **kwargs):
+        tk.Tk.__init__(self, *args, **kwargs)
 
-    Label(frame1, text="Prędkość [km/h]").grid(row=3, column=0, sticky=W)
-    predkosc = DoubleVar()
-    name = Entry(frame1, textvariable=predkosc)
-    name.grid(row=3, column=1, sticky=W)
+        tk.Tk.wm_title(self, "BlackBox")
 
-    frame2 = Frame(window)
-    frame2.pack()
-    b1 = Button(frame2, text="Submit", command=addPlane)
-    b1.pack(side=LEFT)
-    return window
+        container = tk.Frame(self)
+        container.pack(side="top", fill="both", expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
 
-window = makeWindow()
-window.mainloop()
-window.quit()
+        self.frames = {}
+
+        for F in (StartPage, PageOne, PageTwo, PageThree):
+            frame = F(container, self)
+
+            self.frames[F] = frame
+
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        self.show_frame(StartPage)
+
+
+    def show_frame(self, cont):
+        frame = self.frames[cont]
+        frame.tkraise()
+
+
+class StartPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text="Strona startowa", font=LARGE_FONT)
+        label.pack(pady=10, padx=10)
+
+        button = ttk.Button(self, text="Wykres zmiany polozenia",
+                            command=lambda: controller.show_frame(PageOne))
+        button.pack()
+
+        button2 = ttk.Button(self, text="Wykres wysokosci",
+                             command=lambda: controller.show_frame(PageTwo))
+        button2.pack()
+
+        button3 = ttk.Button(self, text="Wykres Predkosci",
+                             command=lambda: controller.show_frame(PageThree))
+        button3.pack()
+
+
+class PageOne(tk.Frame):
+    def __init__(self, parent, controller):
+
+
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text="Wykres zmiany położenia[x,y]", font=LARGE_FONT)
+        label.pack(pady=10, padx=10)
+
+        button1 = ttk.Button(self, text="Powrót",
+                             command=lambda: controller.show_frame(StartPage))
+        button1.pack()
+        f = Figure(figsize=(5, 5), dpi=100)
+        a = f.add_subplot(111)
+        a.plot(allData[1], allData[2])
+
+        canvas = FigureCanvasTkAgg(f, self)
+        canvas.show()
+        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+        toolbar = NavigationToolbar2TkAgg(canvas, self)
+        toolbar.update()
+        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+
+class PageTwo(tk.Frame):
+    def __init__(self, parent, controller):
+
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text="Wykres wysokosći [ft]", font=LARGE_FONT)
+        label.pack(pady=10, padx=10)
+
+        button1 = ttk.Button(self, text="Powrót",
+                             command=lambda: controller.show_frame(StartPage))
+        button1.pack()
+        f = Figure(figsize=(5, 5), dpi=100)
+        a = f.add_subplot(111)
+        a.plot(allData[5])
+
+        canvas = FigureCanvasTkAgg(f, self)
+        canvas.show()
+        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+        toolbar = NavigationToolbar2TkAgg(canvas, self)
+        toolbar.update()
+        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+
+
+class PageThree(tk.Frame):
+    def __init__(self, parent, controller):
+
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text="Wykres Prędkości [km/h]", font=LARGE_FONT)
+        label.pack(pady=10, padx=10)
+
+        button1 = ttk.Button(self, text="Back to Home",
+                             command=lambda: controller.show_frame(StartPage))
+        button1.pack()
+        f = Figure(figsize=(5, 5), dpi=100)
+        a = f.add_subplot(111)
+        a.plot(allData[4])
+
+        canvas = FigureCanvasTkAgg(f, self)
+        canvas.show()
+        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+        toolbar = NavigationToolbar2TkAgg(canvas, self)
+        toolbar.update()
+        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+
+app = SeaofBTCapp()
+app.mainloop()
