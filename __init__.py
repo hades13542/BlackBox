@@ -1,4 +1,5 @@
 # tu jest moj main
+import sys
 import matplotlib
 from Decoder import Decoder
 matplotlib.use("Tkagg")
@@ -12,6 +13,7 @@ LARGE_FONT = ("Verdana", 12)
 
 data = Decoder()
 allData = data.getData()
+
 
 class SeaofBTCapp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -130,6 +132,9 @@ class PageThree(tk.Frame):
         toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-
-app = SeaofBTCapp()
-app.mainloop()
+try:
+    app = SeaofBTCapp()
+    app.mainloop()
+except:
+    print("Bląd GUI lub ogólny błąd aplikacji")
+    sys.exit()
